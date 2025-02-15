@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .form-group {
+        @apply flex flex-col gap-3
+    }
+
+    .form-group .form-control {
+        @apply flex flex-col gap-2
+    }
+
+    .form-group .form-control label {
+        @apply text-gray-500
+    }
+
+    .form-group .form-control input {
+        @apply border border-gray-300 shadow-sm px-2 py-1.5 focus:border-black rounded-md focus:outline-none 
+    }
+
+    .form-group .form-control select {
+        @apply border bg-white border-gray-300 shadow-sm px-2 py-1.5 rounded-md 
+    }
+
+    .form-group .form-control textarea {
+        @apply border border-gray-300 shadow-sm px-2 py-1.5 focus:border-black rounded-md focus:outline-none 
+    }
+
+    .btn {
+        @apply px-2 py-1.5 text-sm rounded-md duration-100
+    }
+
+    .btn-primary {
+        @apply bg-blue-500 hover:bg-blue-600 text-white
+    }
+    
+    .btn-danger {
+        @apply bg-red-500 hover:bg-red-600 text-white
+    }
+
+    .btn-success {
+        @apply bg-green-500 hover:bg-green-600 text-white
+    }
+
+    .btn-warning {
+        @apply bg-orange-500 hover:bg-orange-600 text-white
+    }
+
+    .btn-dead {
+        @apply bg-gray-500 hover:bg-gray-600 text-white
+    }
+}

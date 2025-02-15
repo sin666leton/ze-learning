@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\AnswerQuizController;
 use App\Http\Controllers\V1\AssignmentController;
 use App\Http\Controllers\V1\ClassroomController;
@@ -48,6 +49,10 @@ Route::prefix('admin')->middleware('onlyTeacher')->group(function () {
 
     Route::get('/answer_quiz/{id}', [AnswerQuizController::class, 'show']);
     Route::post('/upload/questionImage', [FileUploadController::class, 'questionImage']);
+
+    Route::controller(ExportController::class)->group(function () {
+        Route::get('/export/assignment/score/{id}', 'assignmentScore');
+    });
 });
 
 Route::prefix('students')->middleware('onlyStudent')->controller(StudentController::class)->group(function () {

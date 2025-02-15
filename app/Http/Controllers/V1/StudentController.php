@@ -469,7 +469,7 @@ class StudentController extends Controller implements \App\Contracts\Controllers
             'link' => $fileUploadService->getFilePath($file)
         ]);
 
-        $answer->scores()->create([
+        $answer->score()->create([
             'student_classroom_id' => $latestClassroom->pivot->id,
             'point' => 100
         ]);

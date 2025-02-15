@@ -157,7 +157,7 @@ class StudentManagementController extends Controller
 
         return redirect()->back()->with(
             'success',
-            'Kelas telah ditambahkan ke siswa'
+            'Siswa telah ditambahkan ke kelas'
         );
     }
 
@@ -167,7 +167,7 @@ class StudentManagementController extends Controller
 
         return redirect()->back()->with(
             'success',
-            'Kelas telah dihapus dari siswa'
+            'Siswa telah dihapus dari kelas'
         );
     }
 }

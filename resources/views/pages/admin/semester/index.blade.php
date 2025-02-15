@@ -51,13 +51,13 @@
                             <h4>{{$loop->iteration}}</h4>
                         </td>
                         <td>
-                            <h4>{{$item->name}}</h4>
+                            <h4>{{$item['name']}}</h4>
                         </td>
                         <td>
                             <div class="flex items-center justify-center gap-2">
-                                <!-- <a href="/admin/classroom/{{$item->id}}" class="btn btn-primary">Lihat</a> -->
-                                <a href="/admin/semesters/{{$item->id}}/edit" class="btn btn-warning">Edit</a>
-                                <form action="/admin/semesters/{{$item->id}}" method="post" delete-attribute="true" title-attribute="Hapus {{$item->name}}?" text-attribute="Item tidak dapat dikembalikan!">
+                                <!-- <a href="/admin/classroom/{{$item['name']}}" class="btn btn-primary">Lihat</a> -->
+                                <a href="/admin/semesters/{{$item['id']}}/edit" class="btn btn-warning">Edit</a>
+                                <form action="/admin/semesters/{{$item['id']}}" method="post" delete-attribute="true" title-attribute="Hapus {{$item['name']}}?" text-attribute="Item tidak dapat dikembalikan!">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger">Hapus</button>

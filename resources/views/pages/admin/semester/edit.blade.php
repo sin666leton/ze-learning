@@ -26,16 +26,6 @@
             <label for="name">Nama</label>
             <input type="text" name="name" id="name" value="{{$semester['name']}}">
         </div>
-        <div class="flex flex-row justify-between gap-4">
-            <div class="flex-1 form-control">
-                <label for="start">Tanggal dimulai</label>
-                <input type="date" name="start" id="start" value="{{$semester['start']}}">
-            </div>
-            <div class="flex-1 form-control">
-                <label for="end">Tanggal berakhir</label>
-                <input type="date" name="end" id="end" value="{{$semester['end']}}">
-            </div>
-        </div>
         <div class="pt-4">
             <button type="submit" class="btn btn-primary">Submit</button>
         </div>

@@ -3,11 +3,11 @@
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AnswerQuizController;
 use App\Http\Controllers\V1\AssignmentController;
-use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\V1\ClassroomController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\V1\QuizController;
-use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\V1\SemesterController;
 use App\Http\Controllers\V1\ScoreController;
 use App\Http\Controllers\V1\StudentController;
 use App\Http\Controllers\V1\StudentManagementController;

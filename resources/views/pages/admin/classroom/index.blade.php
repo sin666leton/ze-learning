@@ -24,7 +24,7 @@
                 <select class="bg-white border border-gray-300 shadow-sm px-2 py-1 rounded-md" name="academic_year" id="">
                     <option value="" default disabled>Tahun ajaran</option>
                     @foreach ( $academicYears as $item )
-                        @if ($item['id'] == $defaultAcademicYear)
+                        @if ($item['id'] == $defaultAcademicYear['id'])
                             <option value="{{$item['id']}}" selected="true">{{$item['name']}}</option>
                         @else
                             <option value="{{$item['id']}}">{{$item['name']}}</option>
@@ -50,16 +50,16 @@
                     <tr class="text-left *:py-2">
                         <td class="text-center">{{$loop->iteration}}</td>
                         <td>
-                            <h4 class="flex-shrink-0">{{$item->name}}</h4>
+                            <h4 class="flex-shrink-0">{{$item['name']}}</h4>
                         </td>
                         <td>
-                            {{$item->students()->count()}} siswa
+                            {{$item['students_count']}} siswa
                         </td>
                         <td>
                             <div class="flex items-center justify-center gap-2">
-                                <a href="/admin/classrooms/{{$item->id}}" class="btn btn-primary">Lihat</a>
-                                <a href="/admin/classrooms/{{$item->id}}/edit" class="btn btn-warning">Edit</a>
-                                <form action="/admin/classrooms/{{$item->id}}" method="post" delete-attribute="true" title-attribute="Hapus kelas {{$item->name}}?" text-attribute="Item tidak dapat dikembalikan!">
+                                <a href="/admin/classrooms/{{$item['id']}}" class="btn btn-primary">Lihat</a>
+                                <a href="/admin/classrooms/{{$item['id']}}/edit" class="btn btn-warning">Edit</a>
+                                <form action="/admin/classrooms/{{$item['id']}}" method="post" delete-attribute="true" title-attribute="Hapus kelas {{$item['name']}}?" text-attribute="Item tidak dapat dikembalikan!">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger">Hapus</button>

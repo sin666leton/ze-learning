@@ -2,11 +2,13 @@
 @section('header')
 <div class="flex-shrink-0 flex flex-col gap-4">
     <div class="flex-shrink-0 flex flex-col -space-y-1 p-2">
-        <div class="flex-1">
-            <h2 class="text-xl">Kelas {{$classroom->name}}</h4>
+        <div class="flex-1 text-lg">
+            @foreach ( $navLink as $link => $value )
+                <a href="{{ $value['url'] }}">{{ $value['label'] }}</a> {{ $loop->last ? '' : '>' }}
+            @endforeach
         </div>
         <div class="flex-1">
-            <h4>Tahun ajaran {{$classroom->academicYear->name}}</h4>
+            <h4>Siswa pada kelas {{ $classroom['name'] }}</h4>
         </div>
     </div>
 </div>
@@ -23,7 +25,7 @@
         <form method="POST" action="/admin/student-management/classrooms" id="floatingForm">
             @csrf
             <input type="hidden" name="student_id">
-            <input type="hidden" name="classroom_id" value="{{$classroom->id}}">
+            <input type="hidden" name="classroom_id" value="{{$classroom['id']}}">
             <div class="relative mb-4">
                 <label for="nis" class="block text-sm font-medium text-gray-700">Nomor induk siswa:</label>
                 <div class="flex items-center">
@@ -91,7 +93,7 @@
                         <h1 class="text-xl">Mata pelajaran</h1>
                     </div>
                     <div class="flex-shrink-0">
-                        <h4>{{$totalSubject}}</h4>
+                        <h4>{{$classroom['subjects_count']}} item</h4>
                     </div>
                     <div class="flex-shrink-0 mt-4">
                         <a href="?category=subject" class="px-3 py-1 rounded-sm text-sm btn-primary">Lihat</a>
@@ -118,7 +120,7 @@
                         <h1 class="text-xl">Siswa</h1>
                     </div>
                     <div class="flex-shrink-0">
-                        <h4>{{$totalStudent}} orang</h4>
+                        <h4>{{$classroom['students_count']}} orang</h4>
                     </div>
                     <div class="flex-shrink-0 mt-4">
                         <a href="?category=student" class="px-3 py-1 rounded-sm text-sm btn-warning">Lihat</a>
@@ -132,7 +134,7 @@
             <div class="flex-1">
                 <div class="flex flex-row gap-2 items-center">
                     <a href="#" id="openFormBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md duration-100 cursor-pointer">Tambah</a href="/admin/subject/create">
-                    <span class="bg-blue-100 border border-blue-500 text-blue-500 py-1 px-2 rounded-md">Total {{$totalStudent}}</span>
+                    <span class="bg-blue-100 border border-blue-500 text-blue-500 py-1 px-2 rounded-md">Total {{$classroom['students_count']}}</span>
                 </div>
             </div>
             <div class="flex-shrink-0">
@@ -146,30 +148,26 @@
                         <th rowspan="1" class="w-12 text-center">#</th>
                         <th rowspan="1">Nama</th>
                         <th rowspan="1" class="w-36">NIS</th>
-                        <th rowspan="1" class="w-46">Bergabung pada</th>
                         <th rowspan="1" class="w-52">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ( $students as $student )
+                    @foreach ( $classroom['students'] as $student )
                         <tr class="text-left *:py-2">
                             <td class="text-center">{{$loop->iteration}}</td>
                             <td>
                                 <div class="flex flex-col">
-                                    <h4 class="flex-shrink-0">{{$student->user->name}}</h4>
-                                    <p class="text-gray-600">{{$student->user->email}}</p>
+                                    <h4 class="flex-shrink-0">{{$student['user']['name']}}</h4>
+                                    <p class="text-gray-600">{{$student['user']['email']}}</p>
                                 </div>
                             </td>
                             <td>
-                                {{$student->nis}}
-                            </td>
-                            <td>
-                                {{$student->created_at->format('d-m-Y h:i')}}
+                                {{$student['nis']}}
                             </td>
                             <td>
                                 <div class="flex items-center justify-center gap-2">
-                                    <a href="/admin/students/{{$student->id}}" class="btn btn-primary">Lihat</a>
-                                    <form action="/admin/student-management/classrooms/{{$student->id}}/{{$classroom->id}}" method="post" delete-attribute="true" title-attribute="Hapus {{$student->user->name}} dari kelas?" text-attribute="Item tidak dapat dikembalikan!">
+                                    <a href="/admin/students/{{$student['student_id']}}" class="btn btn-primary">Lihat</a>
+                                    <form action="/admin/student-management/classrooms/{{$student['student_id']}}/{{$classroom['id']}}" method="post" delete-attribute="true" title-attribute="Hapus {{$student['user']['name']}} dari kelas?" text-attribute="Item tidak dapat dikembalikan!">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger">Hapus</button>
@@ -186,7 +184,7 @@
 @push('scripts')
 <script>
     // JavaScript untuk menangani animasi dan toggle form
-    const classroomID = {{$classroom->id}};
+    const classroomID = {{$classroom['id']}};
     const openFormBtn = document.getElementById('openFormBtn');
     const closeFormBtn = document.getElementById('closeFormBtn');
     const floatingForm = document.getElementById('floatingForm');
@@ -265,9 +263,6 @@
 
                 const nis = inputNIS.value;
 
-                console.log(nis);
-                console.log(classroomID);
-
                 const request = await fetch('/admin/student-management/search', {
                     method: 'POST',
                     headers: {
@@ -275,7 +270,7 @@
                         'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({
-                        'classroomID': classroomID,
+                        'classroom_id': classroomID,
                         'nis': nis
                     }),
                     credentials: "same-origin"

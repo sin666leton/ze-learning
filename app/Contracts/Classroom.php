@@ -2,30 +2,23 @@
 
 namespace App\Contracts;
 
+use Illuminate\Database\Eloquent\Collection;
+
 interface Classroom
 {
-    public function all();
-
-    public function find(int $id);
-
-    public function withAcademicYearAndSemesterFind(int $id): \App\Models\Classroom;
+    public function find(int $id, string $relation = 'subject', int|null $semesterID = null);
 
     /**
-     * Summary of add
-     * @param int $academicYearID
-     * @param array{name: string} $data
+     * Ambil semua kelas dengan tahun ajaran
+     * 
+     * @param \Illuminate\Database\Eloquent\Collection<int, \App\Models\AcademicYear> $acacademicYear
+     * @return array
      */
-    public function add(int $academicYearID, array $data);
-    
-    /**
-     * Summary of update
-     * @param int $id
-     * @param array{name: string} $data
-     * @return void
-     */
-    public function update(int $id, array $data);
+    public function loadFromCollection(Collection $acacademicYear): array;
 
-    public function delete(int $id);
+    public function create(int $academicYearID, string $name): array;
 
-    public function whereHasAcademicYear(int $id);
+    public function update(int $id, string $name): array;
+
+    public function delete(int $id): bool|null;
 }

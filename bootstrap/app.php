@@ -5,6 +5,7 @@ use App\Exceptions\ClassroomNotExists;
 use App\Exceptions\InvalidStudentCredential;
 use App\Exceptions\QuizNotExists;
 use App\Exceptions\SemesterNotExists;
+use App\Exceptions\StudentNotExists;
 use App\Exceptions\SubjectNotExists;
 use App\Exceptions\UploadFileFailed;
 use Illuminate\Foundation\Application;
@@ -28,9 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (\TypeError $e, Request $request) {
-            return abort(404);
-        });
+        // $exceptions->render(function (\TypeError $e, Request $request) {
+        //     return abort(404);
+        // });
 
         $exceptions->render(function (InvalidStudentCredential $e, Request $request) {
             Log::channel('auth')
@@ -102,6 +103,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (SemesterNotExists $e, Request $request) {
             Log::channel('activity')
                 ->notice("trying to access a semester that doesn't exist", [
+                    'IP' => $request->ip(),
+                    'userID' => $request->user() ? $request->user()->id : 'Guest',
+                    'uri' => $request->uri()->__tostring()
+                ]);
+
+            return abort(404);
+        });
+
+        $exceptions->render(function (StudentNotExists $e, Request $request) {
+            Log::channel('activity')
+                ->notice("trying to access a student that doesn't exist", [
                     'IP' => $request->ip(),
                     'userID' => $request->user() ? $request->user()->id : 'Guest',
                     'uri' => $request->uri()->__tostring()

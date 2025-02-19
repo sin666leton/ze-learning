@@ -2,31 +2,71 @@
 
 namespace App\Contracts;
 
+use Illuminate\Database\Eloquent\Collection;
+
 interface Semester
 {
-    public function all();
-
-    public function paginate(
-        int $item = 10
-    );
-
-    public function getByID(int $id);
-
     /**
-     * Summary of add
-     * @param int $academicYearID
-     * @param array{name: string, start: string, end: string} $data
-     */
-    public function add(int $academicYearID, array $data);
-
-    /**
-     * Summary of update
+     * Cari semester berdasarkan id
+     * 
      * @param int $id
-     * @param array{name: string, start: string, end: string} $data
+     * @return array{
+     *  id: int,
+     *  academic_year_id: int,
+     *  name: string,
+     *  academic_year: array{
+     *      id: int,
+     *      name: string
+     *  }
+     * }
      */
-    public function update(int $id, array $data);
+    public function find(int $id): array;
 
-    public function delete(int $id);
+    public function getFromAcademicYear(int $academicYearID): array;
 
-    public function whereHasAcademicYear(int $academicYear);
+    /**
+     * Ambil semester dari collection tahun ajaran
+     * 
+     * @param \Illuminate\Database\Eloquent\Collection<int, \App\Models\AcademicYear> $academicYear
+     * @return array<int, array{
+     *  academic_year_id: int,
+     *  id: int,
+     *  name: string
+     * }>
+     */
+    public function loadFromCollection(Collection $academicYear): array;
+
+    /**
+     * Tambah semester baru
+     * 
+     * @param int $academicYearID
+     * @param string $name
+     * @return array{
+     *  id: int,
+     *  academic_year_id: int,
+     *  name: string
+     * }
+     */
+    public function create(int $academicYearID, string $name): array;
+
+    /**
+     * Perbarui semester
+     * 
+     * @param int $id
+     * @param string $name
+     * @return array{
+     *  id: int,
+     *  academic_year_id: int,
+     *  name: string
+     * }
+     */
+    public function update(int $id, string $name): array;
+
+    /**
+     * Hapus semester
+     * 
+     * @param int $id
+     * @return bool|null
+     */
+    public function delete(int $id): bool|null;
 }

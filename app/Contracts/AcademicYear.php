@@ -2,19 +2,68 @@
 
 namespace App\Contracts;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
+
 interface AcademicYear
 {
-    public function all();
+    public function paginate(int $each = 10): LengthAwarePaginator;
 
-    public function paginate(int $item = 10);
+    /**
+     * Cari tahun ajaran berdasarkan id
+     * 
+     * @param int $id
+     * @return array{
+     *  id: int,
+     *  name: string
+     * }
+     */
+    public function find(int $id): array;
 
-    public function find(int $id);
+    /**
+     * Ambil semua tahun ajaran
+     * 
+     * @return array<int, array{
+     *  id: int,
+     *  name: string
+     * }>
+     */
+    public function get(): array;
 
-    public function add(string $name);
+    /**
+     * Ambil semua tahun ajaran
+     * 
+     * @return Collection<int, \App\Models\AcademicYear>
+     */
+    public function getCollection(): Collection;
 
-    public function update(int $id, string $name);
+    /**
+     * Tambah tahun ajaran
+     * 
+     * @param string $name
+     * @return array{
+     *  id: int,
+     *  name: string
+     * }
+     */
+    public function create(string $name): array;
 
-    public function delete(int $id);
+    /**
+     * Perbarui tahun ajaran
+     * @param int $id
+     * @param string $name
+     * @return array{
+     *  id: int,
+     *  name: string
+     * }
+     */
+    public function update(int $id, string $name): array;
 
-    public function latest();
+    /**
+     * Hapus tahun ajaran
+     * 
+     * @param int $id
+     * @return bool|null
+     */
+    public function delete(int $id): bool|null;
 }

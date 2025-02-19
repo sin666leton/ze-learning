@@ -2,8 +2,10 @@
 @section('header')
 <div class="flex-shrink-0 flex flex-col gap-4">
     <div class="flex-shrink-0 flex flex-col -space-y-1 p-2">
-        <div class="flex-1">
-            <h2 class="text-xl">Edit {{$semester['name']}}</h4>
+        <div class="flex-1 text-lg">
+            @foreach ( $navLink as $link => $value )
+                <a href="{{ $value['url'] }}">{{ $value['label'] }}</a> {{ $loop->last ? '' : '>' }}
+            @endforeach
         </div>
         <div class="flex-1">
             <h4>Form edit semester</h4>
@@ -19,7 +21,7 @@
         <div class="form-control">
             <label for="academic_year">Tahun ajaran</label>
             <select class="bg-gray-200" name="academic_year_id" id="academic_year" disabled>
-                <option value="{{$semester->academicYear->id}}">{{$semester->academicYear->name}}</option>
+                <option value="{{$semester['academic_year']['id']}}">{{$semester['academic_year']['name']}}</option>
             </select>
         </div>
         <div class="form-control">

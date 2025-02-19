@@ -2,11 +2,13 @@
 @section('header')
 <div class="flex-shrink-0 flex flex-col gap-4">
     <div class="flex-shrink-0 flex flex-col -space-y-1 p-2">
-        <div class="flex-1">
-            <h2 class="text-xl">Kelas {{$classroom->name}}</h4>
+        <div class="flex-1 text-lg">
+            @foreach ( $navLink as $link => $value )
+                <a href="{{ $value['url'] }}">{{ $value['label'] }}</a> {{ $loop->last ? '' : '>' }}
+            @endforeach
         </div>
         <div class="flex-1">
-            <h4>Tahun ajaran {{$classroom->academicYear->name}}</h4>
+            <h4>Mata pelajaran pada kelas {{ $classroom['name'] }}</h4>
         </div>
     </div>
 </div>
@@ -33,7 +35,7 @@
                         <h1 class="text-xl">Mata pelajaran</h1>
                     </div>
                     <div class="flex-shrink-0">
-                        <h4>{{$totalSubject}}</h4>
+                        <h4>{{$classroom['subjects_count']}} item</h4>
                     </div>
                     <div class="flex-shrink-0 mt-4">
                         <a href="?category=subject" class="px-3 py-1 rounded-sm text-sm btn-primary">Lihat</a>
@@ -60,7 +62,7 @@
                         <h1 class="text-xl">Siswa</h1>
                     </div>
                     <div class="flex-shrink-0">
-                        <h4>{{$totalStudent}} orang</h4>
+                        <h4>{{$classroom['students_count']}} orang</h4>
                     </div>
                     <div class="flex-shrink-0 mt-4">
                         <a href="?category=student" class="px-3 py-1 rounded-sm text-sm btn-warning">Lihat</a>
@@ -73,16 +75,20 @@
         <div class="flex-shrink-0 flex items-center justify-between gap-2 px-4 py-4">
             <div class="flex-1">
                 <div class="flex flex-row gap-2 items-center">
-                    <a href="/admin/subjects/create?classroom={{$classroom->id}}" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md duration-100 cursor-pointer">Tambah</a href="/admin/subject/create">
-                    <span class="bg-blue-100 border border-blue-500 text-blue-500 py-1 px-2 rounded-md">Total {{$totalSubject}}</span>
+                    <a href="/admin/subjects/create?classroom={{$classroom['id']}}" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md duration-100 cursor-pointer">Tambah</a href="/admin/subject/create">
+                    <span class="bg-blue-100 border border-blue-500 text-blue-500 py-1 px-2 rounded-md">Total {{$classroom['subjects_count']}}</span>
                 </div>
             </div>
             <div class="flex-shrink-0">
-                <form action="/admin/classrooms/{{$classroom->id}}">
+                <form action="/admin/classrooms/{{$classroom['id']}}">
                     <select class="bg-white border border-gray-300 shadow-sm px-2 py-1 rounded-md" name="semester" id="">
-                        <option value="" selected disabled>Semester</option>
-                        @foreach ( $semesters as $item )
-                            <option value="{{$item['id']}}">{{$item['name']}}</option>
+                        <option value="" default disabled>Semester</option>
+                        @foreach ( $classroom['academic_year']['semesters'] as $item )
+                            @if ($item['id'] == $defaultSemesterID)
+                                <option value="{{$item['id']}}" selected>{{$item['name']}}</option>
+                            @else
+                                <option value="{{$item['id']}}">{{$item['name']}}</option>
+                            @endif
                         @endforeach
                     </select>
                     <button type="submit" class="bg-blue-500 hover:bg-blue-600 py-1 px-2 rounded-md text-white duration-100">Cari</button>
@@ -100,21 +106,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ( $subjects as $subject )
+                    @foreach ( $classroom['subjects'] as $subject )
                         <tr class="text-left *:py-2">
                             <td class="text-center">{{$loop->iteration}}</td>
                             <td>
                                 <div class="flex flex-col">
-                                    <h4 class="flex-shrink-0">{{$subject->name}}</h4>
-                                    <p class="text-gray-600">{{$subject->description}}</p>
+                                    <h4 class="flex-shrink-0">{{$subject['name']}}</h4>
                                 </div>
                             </td>
-                            <td>{{$subject->kkm}}</td>
+                            <td>{{$subject['kkm']}}</td>
                             <td>
                                 <div class="flex items-center justify-center gap-2">
-                                    <a href="/admin/subjects/{{$subject->id}}" class="btn btn-primary">Lihat</a>
-                                    <a href="/admin/subjects/{{$subject->id}}/edit" class="btn btn-warning">Edit</a>
-                                    <form action="/admin/subjects/{{$subject->id}}" method="post" delete-attribute="true" title-attribute="Hapus mata pelajaran {{$subject->name}}?" text-attribute="Item tidak dapat dikembalikan!">
+                                    <a href="/admin/subjects/{{$subject['id']}}" class="btn btn-primary">Lihat</a>
+                                    <a href="/admin/subjects/{{$subject['id']}}/edit" class="btn btn-warning">Edit</a>
+                                    <form action="/admin/subjects/{{$subject['id']}}" method="post" delete-attribute="true" title-attribute="Hapus mata pelajaran {{$subject['name']}}?" text-attribute="Item tidak dapat dikembalikan!">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger">Hapus</button>

@@ -23,7 +23,7 @@ class FindStudentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'classroomID' => 'required|integer',
+            'classroom_id' => 'required|integer',
             'nis' => 'required'
         ];
     }
@@ -31,7 +31,7 @@ class FindStudentRequest extends FormRequest
     public function attributes()
     {
         return [
-            'classroomID' => 'Kelas',
+            'classroom_id' => 'Kelas',
             'nis' => 'NIS'
         ];
     }

@@ -35,7 +35,7 @@
                             <h1 class="text-xl">Tuntas</h1>
                         </div>
                         <div class="flex-shrink-0">
-                            <h4>{{$assignment['attempted']}} siswa</h4>
+                            <h4>{{$assignment['answer_assignments_count']}} siswa</h4>
                         </div>
                     </div>
                 </div>
@@ -76,19 +76,19 @@
                 <h4>Tugas</h4>
             </div>
             <div class="flex-shrink-0">
-                <h4>{{$assignment->created_at->format('d-m-Y h:i')}}</h4>
+                <h4>{{$assignment['created']}}</h4>
             </div>
         </div>
         <div class="flex flex-col">
             <div class="flex-shrink-0">
-                <h4 class="text-lg font-semibold">{{$assignment->title}}</h4>
+                <h4 class="text-lg font-semibold">{{$assignment['title']}}</h4>
             </div>
             <div class="flex-1">
-                <p>{{$assignment->content}}</p>
+                <p>{{$assignment['content']}}</p>
             </div>
         </div>
         <div class="flex-shrink-0 mt-2">
-            <a target="__blank" href="/admin/export/score/assignment/{{$assignment->id}}" class="btn btn-primary px-4 ">Cetak</a>
+            <a target="__blank" href="/admin/export/score/assignment/{{$assignment['id']}}" class="btn btn-primary px-4 ">Cetak</a>
         </div>
     </div>
     <div class="flex-1">

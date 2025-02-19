@@ -13,29 +13,28 @@ use Illuminate\Http\Request;
 
 class SemesterController extends Controller
 {
+    public function __construct(
+        protected \App\Contracts\Semester $semester
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, \App\Contracts\AcademicYear $academicYear)
     {
         $academicYearID = $request->academic_year;
         $semesters = [];
 
-        $academicYear = AcademicYear::select(['id', 'name'])
-            ->get();
+        $academicYear = $academicYear->getCollection();
 
         if ($academicYearID != null) {
-            $semesters = $academicYear->where('id', $academicYearID)
-                ->load([
-                    'semesters' => function ($query) {
-                        $query->select(['id', 'academic_year_id', 'name']);
-                    }
-                ]);
-
-            $semesters = $semesters->first()->semesters->toArray();
+            $semesters = $this->semester->loadFromCollection(    $academicYear->where('id', $academicYearID));
         }
 
         return view('pages.admin.semester.index', [
+            'navLink' => [
+                ['url' => '/admin/semesters', 'label' => 'Semester'],
+            ],
             'total' => count($semesters),
             'semesters' => $semesters,
             'academicYear' => $academicYear
@@ -45,11 +44,15 @@ class SemesterController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(\App\Contracts\AcademicYear $academicYear)
     {
-        $academicYear = AcademicYear::select(['id', 'name'])->get();
+        $academicYear = $academicYear->get();
 
         return view('pages.admin.semester.create', [
+            'navLink' => [
+                ['url' => '/admin/semesters', 'label' => 'Semester'],
+                ['url' => '#', 'label' => 'Tambah'],
+            ],
             'academicYear' => $academicYear
         ]);
     }
@@ -59,18 +62,10 @@ class SemesterController extends Controller
      */
     public function store(StoreSemesterRequest $request)
     {
-        AcademicYear::select('id')
-            ->where('id', $request->safe()->academic_year_id)
-            ->firstOr(function () {
-                throw new AcademicYearNotExists();
-            })
-            ->semesters()
-            ->create([
-                'name' => $request->safe()->name
-            ]);
+        $semester = $this->semester->create($request->safe()->academic_year_id, $request->safe()->name);
 
         return redirect()->route('semesters.index', [
-            'academic_year' => $request->safe()->academic_year_id
+            'academic_year' => $semester['academic_year_id']
         ]);
     }
 
@@ -87,18 +82,13 @@ class SemesterController extends Controller
      */
     public function edit(string $id)
     {
-        $semester = Semesters::with([
-            'academicYear' => function ($query) {
-                $query->select(['id', 'name']);
-            }
-        ])
-        ->select(['id', 'academic_year_id', 'name'])
-        ->where('id', $id)
-        ->firstOr(function () {
-            throw new SemesterNotExists();
-        });
+        $semester = $this->semester->find($id);
 
         return view('pages.admin.semester.edit', [
+            'navLink' => [
+                ['url' => '/admin/semesters', 'label' => 'Semester'],
+                ['url' => '#', 'label' => 'Edit'],
+            ],
             'semester' => $semester
         ]);
     }
@@ -108,18 +98,10 @@ class SemesterController extends Controller
      */
     public function update(UpdateSemesterRequest $request, string $id)
     {
-        $semester = Semesters::select(['id', 'name', 'academic_year_id'])
-            ->where('id', $id)
-            ->firstOr(function () {
-                throw new SemesterNotExists();
-            });
+        $semester = $this->semester->update($id, $request->safe()->name);
         
-        $semester->update([
-            'name' => $request->safe()->name
-        ]);
-
         return redirect()->route('semesters.index', [
-            'academic_year' => $semester->academic_year_id
+            'academic_year' => $semester['academic_year_id']
         ]);
     }
 
@@ -128,12 +110,11 @@ class SemesterController extends Controller
      */
     public function destroy(string $id)
     {
-        Semesters::select(['id', 'name'])
-            ->where('id', $id)
-            ->firstOr(function () {
-                throw new SemesterNotExists();
-            })
-            ->delete();
+        $bool = $this->semester->delete($id);
+
+        if (!$bool) {
+            return abort(500);
+        }
 
         return redirect()->back();
     }

@@ -34,10 +34,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(\App\Contracts\AcademicYear::class, AcademicYearRepository::class);
-        $this->app->bind(\App\Contracts\Semester::class, SemesterRepository::class);
         $this->app->bind(\App\Contracts\Classroom::class, ClassroomRepository::class);
-        $this->app->bind(\App\Contracts\Subject::class, SubjectRepository::class);
         $this->app->bind(\App\Contracts\Assignment::class, AssignmentRepository::class);
         $this->app->bind(\App\Contracts\Quiz::class, QuizRepository::class);
         $this->app->bind(\App\Contracts\Student::class, StudentRepository::class);

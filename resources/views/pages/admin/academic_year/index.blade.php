@@ -2,11 +2,13 @@
 @section('header')
 <div class="flex-shrink-0 flex flex-col gap-4">
     <div class="flex-shrink-0 flex flex-col -space-y-1 p-2">
-        <div class="flex-1">
-            <h2 class="text-xl">Tahun Pelajaran</h4>
+        <div class="flex-1 text-lg">
+            @foreach ( $navLink as $link => $value )
+                <a href="{{ $value['url'] }}">{{ $value['label'] }}</a> {{ $loop->last ? '' : '>' }}
+            @endforeach
         </div>
         <div class="flex-1">
-            <h4>Halaman tahun pelajaran</h4>
+            <h4>Halaman tahun ajaran</h4>
         </div>
     </div>
 </div>
@@ -46,13 +48,13 @@
                                 <h4 class="flex-shrink-0">{{$item->name}}</h4>
                             </div>
                         </td>
-                        <td>{{$item->semesters()->count()}} Semester</td>
-                        <td>{{$item->classrooms()->count()}} Kelas</td>
+                        <td>{{$item['semesters_count']}} Semester</td>
+                        <td>{{$item['classrooms_count']}} Kelas</td>
                         <td>
                             <div class="flex items-center justify-center gap-2">
                                 <!-- <a href="/admin/classroom/{{$item->id}}" class="btn btn-primary">Lihat</a> -->
-                                <a href="/admin/academic-years/{{$item->id}}/edit" class="btn btn-warning">Edit</a>
-                                <form action="/admin/academic-years/{{$item->id}}" method="post" delete-attribute="true" title-attribute="Hapus tahun ajaran {{$item->name}}?" text-attribute="Item tidak dapat dikembalikan!">
+                                <a href="/admin/academic-years/{{$item['id']}}/edit" class="btn btn-warning">Edit</a>
+                                <form action="/admin/academic-years/{{$item['id']}}" method="post" delete-attribute="true" title-attribute="Hapus tahun ajaran {{$item->name}}?" text-attribute="Item tidak dapat dikembalikan!">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger">Hapus</button>

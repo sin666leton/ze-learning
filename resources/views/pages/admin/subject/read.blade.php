@@ -2,18 +2,20 @@
 @section('header')
 <div class="flex-shrink-0 flex flex-col gap-4">
     <div class="flex-shrink-0 flex flex-col -space-y-1 p-2">
-        <div class="flex-1">
-            <h2 class="text-xl">Mata pelajaran {{$subject->name}}</h4>
+        <div class="flex-1 text-lg">
+            @foreach ( $navLink as $link => $value )
+                <a href="{{ $value['url'] }}">{{ $value['label'] }}</a> {{ $loop->last ? '' : '>' }}
+            @endforeach
         </div>
         <div class="flex-1">
-            <h4>{{$subject->semester->name}}</h4>
+            <h4>Halaman mata pelajaran</h4>
         </div>
     </div>
 </div>
 @endsection
 @section('content')
 <div class="flex flex-col lg:flex-row gap-4">
-    <a href="/admin/assignments?subject={{$subject->id}}" class="flex-1 rounded-md overflow-hidden shadow-md py-4 shadow-blue-300 bg-blue-500 hover:bg-blue-600 duration-100">
+    <a href="/admin/assignments?subject={{$subject['id']}}" class="flex-1 rounded-md overflow-hidden shadow-md py-4 shadow-blue-300 bg-blue-500 hover:bg-blue-600 duration-100">
         <div class="flex flex-col gap-4 justify-center items-center">
             <div class="flex-shrink-0">
                 <svg class="w-10 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
@@ -27,7 +29,7 @@
             </div>
         </div>
     </a> 
-    <a href="/admin/quizzes?subject={{$subject->id}}" class="flex-1 rounded-md overflow-hidden shadow-md py-4 shadow-orange-300 bg-orange-500 hover:bg-orange-600 duration-100">
+    <a href="/admin/quizzes?subject={{$subject['id']}}" class="flex-1 rounded-md overflow-hidden shadow-md py-4 shadow-orange-300 bg-orange-500 hover:bg-orange-600 duration-100">
         <div class="flex flex-col gap-4 justify-center items-center">
             <div class="flex-shrink-0">
                 <svg class="w-14 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">

@@ -13,6 +13,10 @@ use Illuminate\Http\Request;
 
 class AssignmentController extends Controller
 {
+    public function __construct(
+        protected \App\Contracts\Assignment $assignment
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -94,62 +98,7 @@ class AssignmentController extends Controller
      */
     public function show(string $id)
     {
-        $assignment = Assignment::with([
-            'answerAssignments' => function ($query) {
-                $query->select([
-                    'id',
-                    'assignment_id',
-                    'student_classroom_id',
-                    'link',
-                    'namespace',
-                    'created_at'
-                ])
-                ->with([
-                    'score' => function ($scores) {
-                        $scores->select([
-                            'id',
-                            'scoreable_id',
-                            'scoreable_type',
-                            'student_classroom_id',
-                            'point',
-                            'published'
-                        ]);
-                    }
-                ])
-                ->with([
-                    'studentClassroom' => function ($pivot) {
-                        $pivot->select(['id', 'student_id'])
-                            ->with([
-                                'student' => function ($student) {
-                                    $student->select(['id', 'user_id', 'nis'])
-                                        ->with([
-                                            'user' => function ($user) {
-                                                $user->select(['id', 'name']);
-                                            }
-                                        ]);
-                                }
-                            ]);
-                    }
-                ]);
-            }
-        ])
-        ->select([
-            'id',
-            'subject_id',
-            'title',
-            'content',
-            'created_at',
-            'access_at',
-            'ended_at',
-            'size'
-        ])
-        ->where('id', $id)
-        ->firstOr(function () {
-            throw new AssignmentNotExists();
-        });
-
-        $assignment->attempted = $assignment->answerAssignments->count();
-        $assignment->not_attempted = ($assignment->subject->classroom->students()->count() - $assignment->attempted);
+        $assignment = $this->assignment->find($id);
 
         return view('pages.admin.assignment.read', [
             'assignment' => $assignment,

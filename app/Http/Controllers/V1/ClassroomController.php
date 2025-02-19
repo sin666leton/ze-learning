@@ -17,63 +17,45 @@ use Illuminate\Http\Request;
 class ClassroomController extends Controller
 {
     public function __construct(
-        protected ClassroomService $service
+        protected \App\Contracts\Classroom $classroom
     ) {}
 
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
-    {        
-        $academicYearID = $request->academic_year;
-        $classrooms = [];
+    public function index(Request $request, \App\Contracts\AcademicYear $academicYear)
+    {
+        $academicYears = $academicYear->getCollection();
+        $lastAcademicYear = $academicYears->last();
+        $academicYearID = $request->query('academic_year', $lastAcademicYear->id);
 
-        $academicYear = AcademicYear::select(['id', 'name'])
-            ->get();
-
-        if ($academicYearID != null) {
-            $classrooms = $academicYear->where('id', $academicYearID)
-                ->load([
-                    'classrooms' => function ($query) {
-                        $query->select(['id', 'academic_year_id', 'name'])
-                            ->withCount('students');
-                    }
-                ])
-                ->first()
-                ->classrooms
-                ->toArray();
-            
-            // dd($classrooms);
-        } else {
-            $classrooms = $academicYear->last()
-                ->first()
-                ->load([
-                    'classrooms' => function ($query) {
-                        $query->select(['id', 'academic_year_id', 'name'])
-                            ->withCount('students');
-                    }
-                ])
-                ->classrooms
-                ->toArray();
-
-        }
+        $classrooms = $this->classroom->loadFromCollection(
+            $academicYears->where('id', $academicYearID)
+        );
 
         return view('pages.admin.classroom.index', [
+            'navLink' => [
+                ['url' => '#', 'label' => 'Kelas'],
+            ],
             'total' => count($classrooms),
             'classrooms' => $classrooms,
-            'academicYears' => $academicYear,
-            'defaultAcademicYear' => $academicYear->last()->first()
+            'academicYears' => $academicYears,
+            'defaultAcademicYear' => $academicYearID
         ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(\App\Contracts\AcademicYear $academicYear)
     {
-        $academicYear = AcademicYear::select(['id', 'name'])->get();
+        $academicYear = $academicYear->get();
 
         return view('pages.admin.classroom.create', [
+            'navLink' => [
+                ['url' => '/admin/classrooms', 'label' => 'Kelas'],
+                ['url' => '#', 'label' => 'Tambah']
+            ],
             'academicYears' => $academicYear
         ]);
     }
@@ -101,38 +83,32 @@ class ClassroomController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Request $request, SemesterService $semester, string $id)
+    public function show(Request $request, string $id)
     {
-        $classroom = $this->service->find($id);
-        $semesters = $semester->fromAcademicYear($classroom->academic_year_id);
+        // $classroom = $this->service->find($id);
+        // $semesters = $semester->fromAcademicYear($classroom->academic_year_id);
 
         if ($request->category == "student") {
-            
-            $students = $classroom->students()->get();
-            $subjects = $classroom
-                ->subjects()
-                ->count();
+            $classroom = $this->classroom->find($id, 'student');
 
             return view('pages.admin.classroom.student', [
-                'classroom' => $classroom,
-                'totalSubject' => $subjects,
-                'students' => $students,
-                'totalStudent' => count($students)
+                'navLink' => [
+                    ['url' => '/admin/classrooms', 'label' => 'Kelas'],
+                    ['url' => '#', 'label' => $classroom['name']]
+                ],
+                'classroom' => $classroom
             ]);
         } else {
-            $semesterID = $request->semester != null ? $semesterID = $request->semester : $semesterID = $semesters->first->id;
-            $students = $classroom->students()->count();
-            $subjects = $classroom
-                ->subjects()
-                ->where('semester_id', $semesterID)
-                ->get();
-            
+            $lastSemesterID = $request->query('semester');
+            $classroom = $this->classroom->find($id, semesterID: $request->query('semester'));
+
             return view('pages.admin.classroom.read', [
+                'navLink' => [
+                    ['url' => '/admin/classrooms', 'label' => 'Kelas'],
+                    ['url' => '#', 'label' => $classroom['name']]
+                ],
                 'classroom' => $classroom,
-                'totalSubject' => count($subjects),
-                'semesters' => $semesters,
-                'subjects' => $subjects,
-                'totalStudent' => $students
+                'defaultSemesterID' => $lastSemesterID == null ? $classroom['academic_year']['semesters'][array_key_last($classroom['academic_year']['semesters'])]['id'] : $lastSemesterID
             ]);
         }
 

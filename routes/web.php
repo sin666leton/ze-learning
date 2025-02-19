@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\V1\AcademicYearController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\AnswerQuizController;
 use App\Http\Controllers\V1\AssignmentController;
@@ -12,7 +12,7 @@ use App\Http\Controllers\V1\SemesterController;
 use App\Http\Controllers\V1\ScoreController;
 use App\Http\Controllers\V1\StudentController;
 use App\Http\Controllers\V1\StudentManagementController;
-use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\V1\SubjectController;
 use App\Http\Controllers\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,10 +30,10 @@ Route::prefix('admin')->middleware('onlyTeacher')->group(function () {
     Route::get('/dashboard', [UserController::class, 'adminDashboardView']);
     Route::get('/logout', [UserController::class, 'logout']);
 
-    Route::resource('academic-years', AcademicYearController::class);
-    Route::resource('semesters', SemesterController::class);
+    Route::resource('academic-years', AcademicYearController::class)->except('show');
+    Route::resource('semesters', SemesterController::class)->except('show');
     Route::resource('classrooms', ClassroomController::class);
-    Route::resource('subjects', SubjectController::class);
+    Route::resource('subjects', SubjectController::class)->except('index');
     Route::resource('assignments', AssignmentController::class);
     Route::resource('quizzes', QuizController::class);
     Route::resource('students', StudentManagementController::class);

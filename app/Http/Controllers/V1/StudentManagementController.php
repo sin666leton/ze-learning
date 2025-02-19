@@ -123,7 +123,7 @@ class StudentManagementController extends Controller
         try {
             $classroomID = $request->safe()->classroom_id;
 
-            $data = \App\Models\Student::with('user')
+            $data = Student::with('user')
                 ->whereDoesntHave('classrooms', function ($query) use ($classroomID) {
                     $query->where('classroom_id', $classroomID);
                 })
@@ -141,7 +141,7 @@ class StudentManagementController extends Controller
             return response()->json([
                 'data' => $data
             ], 200);
-        } catch (ModelNotFoundException $th) {
+        } catch (StudentNotExists $th) {
             return response()->json([
                 'message' => 'Tidak ditemukan'
             ], 404);

@@ -4,6 +4,7 @@ use App\Exceptions\AcademicYearNotExists;
 use App\Exceptions\ClassroomNotExists;
 use App\Exceptions\InvalidStudentCredential;
 use App\Exceptions\QuizNotExists;
+use App\Exceptions\ScoreNotExists;
 use App\Exceptions\SemesterNotExists;
 use App\Exceptions\StudentNotExists;
 use App\Exceptions\SubjectNotExists;
@@ -114,6 +115,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (StudentNotExists $e, Request $request) {
             Log::channel('activity')
                 ->notice("trying to access a student that doesn't exist", [
+                    'IP' => $request->ip(),
+                    'userID' => $request->user() ? $request->user()->id : 'Guest',
+                    'uri' => $request->uri()->__tostring()
+                ]);
+
+            return abort(404);
+        });
+
+        $exceptions->render(function (ScoreNotExists $e, Request $request) {
+            Log::channel('activity')
+                ->notice("trying to access a score that doesn't exist", [
                     'IP' => $request->ip(),
                     'userID' => $request->user() ? $request->user()->id : 'Guest',
                     'uri' => $request->uri()->__tostring()

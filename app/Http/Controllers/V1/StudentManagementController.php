@@ -9,6 +9,7 @@ use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Student;
 use App\Models\User;
+use App\Repositories\V1\StudentRepository;
 use App\Services\ClassroomService;
 use App\Services\StudentService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -18,7 +19,7 @@ use App\Http\Controllers\Controller;
 class StudentManagementController extends Controller
 {
     public function __construct(
-        protected StudentService $service
+        protected StudentRepository $student
     ) {}
 
     /**
@@ -26,13 +27,12 @@ class StudentManagementController extends Controller
      */
     public function index()
     {
-        $student = User::withWhereHas('student', function ($query) {
-            $query->select(['id', 'user_id', 'nis']);
-        })
-        ->select(['id', 'name', 'email', 'created_at'])
-        ->paginate(10);
+        $student = $this->student->paginate(10);
 
         return view('pages.admin.users.index', [
+            'navLink' => [
+                ['url' => '#', 'label' => 'Pengguna'],
+            ],
             'users' => $student
         ]);
     }
@@ -50,7 +50,12 @@ class StudentManagementController extends Controller
      */
     public function store(StoreStudentRequest $request)
     {
-        $this->service->create($request->safe()->all());
+        $this->student->create(
+            $request->safe()->email,
+            $request->safe()->name,
+            $request->safe()->password,
+            $request->safe()->nis
+        );
 
         return redirect()->route('students.index');
     }
@@ -60,38 +65,24 @@ class StudentManagementController extends Controller
      */
     public function show(string $id)
     {
-        $student = Student::with([
-            'user' => function ($query) {
-                $query->select(['id', 'name', 'email', 'created_at', 'profile']);
-            },
-            'classrooms' => function ($query) {
-                $query->select(['name', 'academic_year_id'])
-                    ->latest('student_classroom.id')
-                    ->with([
-                        'academicYear' => function ($academic) {
-                            $academic->select(['id', 'name']);
-                        }
-                    ]);
-            }
-        ])
-        ->where('id', $id)
-        ->select(['id', 'user_id', 'nis'])
-        ->first();
-
-        // dd($student->classrooms[0]->academicYear->name);
-
+        $student = $this->student->find($id);
+        
         return view('pages.admin.users.read', [
+            'navLink' => [
+                ['url' => '/admin/students', 'label' => 'Pengguna'],
+                ['url' => '#', 'label' => $student['nis']]
+            ],
             'student' => $student,
-            'lastClass' => $student->classrooms->first()
+            'lastClass' => $student['classrooms'][0]
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(ClassroomService $classroom, string $id)
+    public function edit(string $id)
     {
-        $student = $this->service->find($id);
+        $student = $this->student->find($id);
 
         return view('pages.admin.users.edit', [
             'student' => $student
@@ -103,7 +94,12 @@ class StudentManagementController extends Controller
      */
     public function update(UpdateStudentRequest $request, string $id)
     {
-        $this->service->update($id, $request->safe()->all());
+        $this->student->update(
+            $id,
+            $request->safe()->email,
+            $request->safe()->name,
+            $request->safe()->nis
+        );
 
         return redirect()->route('students.index');
     }
@@ -113,7 +109,7 @@ class StudentManagementController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->service->delete($id);
+        $this->student->delete($id);
 
         return redirect()->route('students.index');
     }
@@ -121,22 +117,16 @@ class StudentManagementController extends Controller
     public function findStudent(FindStudentRequest $request)
     {
         try {
-            $classroomID = $request->safe()->classroom_id;
-
-            $data = Student::with('user')
-                ->whereDoesntHave('classrooms', function ($query) use ($classroomID) {
-                    $query->where('classroom_id', $classroomID);
-                })
-                ->where('nis', $request->safe()->nis)
-                ->firstOr(function () {
-                    throw new StudentNotExists();
-                });
+            $data = $this->student->findByNISandClassroom(
+                $request->safe()->nis,
+                $request->safe()->classroom_id
+            );
 
             $data = [
-                'id' => $data->id,
-                'user_id' => $data->user_id,
-                'name' => $data->user->name,
-                'nis' => $data->nis
+                'id' => $data['id'],
+                'user_id' => $data['user_id'],
+                'name' => $data['user']['name'],
+                'nis' => $data['nis']
             ];
             return response()->json([
                 'data' => $data
@@ -150,7 +140,7 @@ class StudentManagementController extends Controller
 
     public function addClassroom(AttachClassroomStudentRequest $request)
     {
-        $this->service->addClassroom(
+        $this->student->attachClassroom(
             $request->safe()->student_id,
             $request->safe()->classroom_id
         );
@@ -163,7 +153,10 @@ class StudentManagementController extends Controller
 
     public function removeClassroom(string $student_id, string $classroom_id)
     {
-        $this->service->removeClassroom($student_id, $classroom_id);
+        $this->student->detachClassroom(
+            $student_id,
+            $classroom_id
+        );
 
         return redirect()->back()->with(
             'success',

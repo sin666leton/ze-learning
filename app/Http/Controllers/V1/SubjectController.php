@@ -2,16 +2,9 @@
 
 namespace App\Http\Controllers\V1;
 
-use App\Exceptions\AcademicYearNotExists;
-use App\Exceptions\ClassroomNotExists;
-use App\Exceptions\SemesterNotExists;
-use App\Exceptions\SubjectNotExists;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSubjectRequest;
 use App\Http\Requests\UpdateSubjectRequest;
-use App\Models\Classroom;
-use App\Models\Semesters;
-use App\Models\Subject;
 use Illuminate\Http\Request;
 
 class SubjectController extends Controller
@@ -31,12 +24,14 @@ class SubjectController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Request $request)
+    public function create(Request $request, \App\Contracts\Classroom $classroom)
     {
         $classID = $request->classroom;
         if ($classID == null) return abort(404);
 
-        $classroom = $this->subject->getByClassroom($classID);
+        $classroom = $classroom->singleFind($classID);
+        
+        // dd($classroom);
 
         return view('pages.admin.subject.create', [
             'classroom' => $classroom

@@ -19,14 +19,14 @@
             <div class="flex-1 form-control">
                 <label for="classroom">Kelas</label>
                 <select name="classroom_id" id="classroom" class="bg-gray-100">
-                    <option value="{{$classroom->id}}">{{$classroom->name}}</option>
+                    <option value="{{$classroom['id']}}">{{$classroom['name']}}</option>
                 </select>
             </div>
             <div class="flex-1 form-control">
                 <label for="semester">Semester</label>
                 <select name="semester_id" id="semester">
-                    @foreach ( $classroom->academicYear->semesters()->get() as $item )
-                        <option value="{{$item->id}}">{{$item->name}}</option>
+                    @foreach ( $classroom['academic_year']['semesters'] as $item )
+                        <option value="{{$item['id']}}">{{$item['name']}}</option>
                     @endforeach
                 </select>
             </div>

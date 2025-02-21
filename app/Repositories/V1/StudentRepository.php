@@ -5,60 +5,67 @@ use App\Exceptions\ClassroomNotExists;
 use App\Exceptions\StudentNotExists;
 use App\Models\Classroom;
 use App\Models\Student;
+use App\Models\StudentClassroom;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class StudentRepository implements \App\Contracts\Student
-{
-    public function all()
-    {
-        $query = Student::with(['user' => function ($query) {
-            $query->select(['id', 'name', 'email']);
-        }])
-        ->select(['id', 'user_id', 'nis'])
-        ->get();
-
-        return $query;
-    }
-
+{  
     public function paginate(int $item = 10)
     {
-        return Student::with(['user' => function ($query) {
-            $query->select(['id', 'name', 'email']);
-        }])
-        ->select(['id', 'user_id', 'nis'])
+        return User::withWhereHas('student', function ($query) {
+            $query->select(['id', 'user_id', 'nis']);
+        })
+        ->select(['id', 'name', 'email', 'created_at'])
         ->paginate($item);
     }
 
     public function find(int $id)
     {
-        $query = Student::with(['user' => function ($query) {
-            $query->select(['id', 'name', 'email', 'created_at']);
-        }])
+        $student = Student::with([
+            'user' => function ($query) {
+                $query->select(['id', 'name', 'email', 'created_at', 'profile']);
+            },
+            'classrooms' => function ($query) {
+                $query->select(['name', 'academic_year_id'])
+                    ->latest('student_classroom.id')
+                    ->with([
+                        'academicYear' => function ($academic) {
+                            $academic->select(['id', 'name']);
+                        }
+                    ]);
+            }
+        ])
+        ->where('id', $id)
         ->select(['id', 'user_id', 'nis'])
-        ->findOr($id, function () {
+        ->firstOr(function () {
             throw new StudentNotExists();
         });
 
-        return $query;
+        return $student->toArray();
     }
 
-    public function update(int $id, string $email, string $name, int $nis)
+    public function findByNISandClassroom(int $nis, int $classroomID)
     {
-        $student = $this->find($id);
+        $data = Student::with([
+            'user' => function ($user) {
+                $user->select(['id', 'name']);
+            }
+        ])
+        ->whereDoesntHave('classrooms', function ($query) use ($classroomID) {
+            $query->where('classroom_id', $classroomID);
+        })
+        ->select('id', 'student_id', 'nis')
+        ->where('nis', $nis)
+        ->firstOr(function () {
+            throw new StudentNotExists();
+        });
 
-        $student->user->update([
-            'email' => $email,
-            'name' => $name
-        ]);
-
-        $student->update([
-            'nis' => $nis
-        ]);
+        return $data->toArray();
     }
 
-    public function add(string $email, string $name, string $password, int $nis)
+    public function create(string $email, string $name, string $password, int $nis)
     {
         $user = User::create([
             'email' => $email,
@@ -67,6 +74,29 @@ class StudentRepository implements \App\Contracts\Student
         ]);
 
         $user->student()->create([
+            'nis' => $nis
+        ]);
+    }
+
+    public function update(int $id, string $email, string $name, int $nis)
+    {
+        $student = Student::with([
+            'user' => function ($user) {
+                $user->select(['id', 'name', 'email']);
+            }
+        ])
+        ->select(['user_id', 'nis'])
+        ->where('id', $id)
+        ->firstOr(function () {
+            throw new StudentNotExists();
+        });
+
+        $student->user->update([
+            'email' => $email,
+            'name' => $name
+        ]);
+
+        $student->update([
             'nis' => $nis
         ]);
     }
@@ -102,22 +132,13 @@ class StudentRepository implements \App\Contracts\Student
 
     public function detachClassroom(int $studentID, int $classroomID)
     {
-        $student = Student::select('id')
-            ->findOr($studentID, function () {
-                throw new StudentNotExists();
+        $pivot = StudentClassroom::select(['id', 'classroom_id', 'student_id'])
+            ->where('student_id', $studentID)
+            ->where('classroom_id', $classroomID)
+            ->firstOr(function () {
             });
 
-        $student->classrooms()->detach($classroomID);
-    }
-
-    public function findClassroom(int $studentID, int $classroomID)
-    {
-
-    }
-
-    public function getAllClassroom(int $studentID)
-    {
-
+        $pivot->delete();
     }
 
     public function getLastAttachClassroom(int $studentID)
@@ -133,10 +154,5 @@ class StudentRepository implements \App\Contracts\Student
         });
 
         return $query->classrooms->first();
-    }
-
-    public function getStudentByNISWithValidateClassroom(int $nis, int $classroomID)
-    {
-
     }
 }

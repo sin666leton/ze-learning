@@ -6,6 +6,7 @@ use App\Exceptions\ScoreNotExists;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateScoreRequest;
 use App\Models\Score;
+use Illuminate\Database\Eloquent\RelationNotFoundException;
 use Illuminate\Http\Request;
 
 class ScoreController extends Controller
@@ -50,19 +51,46 @@ class ScoreController extends Controller
         $type = $request->type;
 
         if ($type == null) return abort(404);
-
-        if ($type == 'assignment') {
-            $score = Score::with([
-                'scoreable' => function ($query) {
-                    $query->when($query->getBindings() instanceof \App\Models\AnswerAssignment);
+        try {
+            $score = Score::when(
+                $type == 'quiz',
+                function ($query) {
                     $query->with([
-                        'assignment' => function ($assignment) {
-                            $assignment->select(['id', 'subject_id', 'title'])
-                                ->with([
-                                    'subject' => function ($subject) {
-                                        $subject->select(['id', 'name']);
-                                    }
-                                ]);
+                        'studentClassroom' => function ($pivot) {
+                            $pivot->with([
+                                'student' => function ($student) {
+                                    $student->with([
+                                        'user' => function ($user) {
+                                            $user->select(['id', 'name']);
+                                        }
+                                    ])
+                                    ->select(['id', 'user_id', 'nis']);
+                                }
+                            ])
+                            ->select(['student_id', 'id']);
+                        },
+                        'scoreable' => function ($quiz) {
+                            $quiz->with('subject');
+                        }
+                    ]);
+                }
+            )
+            ->when(
+                $type == 'assignment',
+                function ($query) {
+                    $query->with([
+                        'scoreable' => function ($answerAssignment) use ($query) {
+                            $query->select(['id', 'assignment_id', 'student_classroom_id']);
+                            $answerAssignment->with([
+                                'assignment' => function ($assignment) {
+                                    $assignment->with([
+                                        'subject' => function ($subject) {
+                                            $subject->select(['id', 'name']);
+                                        }
+                                    ])
+                                    ->select(['id', 'subject_id', 'title']);
+                                }
+                            ]);
                         }
                     ]);
                     $query->with([
@@ -81,53 +109,19 @@ class ScoreController extends Controller
                         }
                     ]);
                 }
-            ])
-            ->select(['id', 'scoreable_id', 'scoreable_type', 'point', 'published'])
+            )
+            ->select(['id', 'student_classroom_id', 'scoreable_id', 'scoreable_type', 'point', 'created_at', 'published'])
             ->where('id', $id)
             ->firstOr(function () {
                 throw new ScoreNotExists();
             });
-
-            // dd($score->toArray());
-
-        } elseif ($type == 'quiz') {
-            $score = Score::with([
-                'scoreable' => function ($query) {
-                    $query->when($query->getBindings() instanceof \App\Models\Quiz);
-                    $query->select(['id', 'subject_id', 'title']);
-                    $query->with([
-                        'subject' => function ($subject) {
-                            $subject->select(['id', 'name']);
-                        }
-                    ]);
-                },
-                'studentClassroom' => function ($pivot) {
-                    $pivot->select(['id', 'student_id'])
-                        ->with([
-                            'student' => function ($student) {
-                                $student->select(['id', 'user_id', 'nis'])
-                                    ->with([
-                                        'user' => function ($user) {
-                                            $user->select(['id', 'name']);
-                                        }
-                                    ]);
-                            } 
-                        ]);
-                }
-            ])
-            ->select(['id', 'student_classroom_id', 'scoreable_id', 'scoreable_type', 'point', 'published'])
-            ->where('id', $id)
-            ->firstOr(function () {
-                throw new ScoreNotExists();
-            });
-
-        } else {
+        
+            return view('pages.admin.score.edit', [
+                'score' => $score->toArray(),
+            ]);
+        } catch (RelationNotFoundException $th) {
             return abort(404);
         }
-
-        return view('pages.admin.score.edit', [
-            'score' => $score,
-        ]);
     }
 
     /**

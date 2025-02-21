@@ -34,7 +34,7 @@ class UserObserver
      */
     public function deleted(User $user): void
     {
-        session()->flash('success', "Pelajar 123 telah dihapus");
+        // session()->flash('success', "Pelajar ".$user->student->nis." telah dihapus");
     }
 
     /**

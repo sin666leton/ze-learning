@@ -82,9 +82,9 @@ class SubjectRepository implements \App\Contracts\Subject
         $classroom = Classroom::with([
             'academicYear' => function ($academic) use (&$semesterID) {
                 $academic->select(['id'])
-                    ->withWhereHas('semesters', function ($semesters) use (&$semestersID) {
+                    ->withWhereHas('semesters', function ($semesters) use (&$semesterID) {
                         $semesters->select(['id', 'academic_year_id'])
-                            ->where('id', $semestersID)
+                            ->where('id', $semesterID)
                             ->limit(1);
                     });
             }

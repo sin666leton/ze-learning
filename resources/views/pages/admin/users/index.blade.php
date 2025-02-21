@@ -2,11 +2,13 @@
 @section('header')
 <div class="flex-shrink-0 flex flex-col gap-4">
     <div class="flex-shrink-0 flex flex-col -space-y-1 p-2">
-        <div class="flex-1">
-            <h2 class="text-xl">Pengguna</h4>
+        <div class="flex-1 text-lg">
+            @foreach ( $navLink as $link => $value )
+                <a href="{{ $value['url'] }}">{{ $value['label'] }}</a> {{ $loop->last ? '' : '>' }}
+            @endforeach
         </div>
         <div class="flex-1">
-            <h4>Daftar pengguna</h4>
+            <h4>Daftar siswa</h4>
         </div>
     </div>
 </div>
@@ -58,7 +60,7 @@
                             <div class="flex items-center justify-center gap-2">
                                 <a href="/admin/students/{{$item->student->id}}" class="btn btn-primary">Lihat</a>
                                 <a href="/admin/students/{{$item->student->id}}/edit" class="btn btn-warning">Edit</a>
-                                <form action="/admin/students/{{$item->id}}" method="post" delete-attribute="true" title-attribute="Hapus {{$item->name}}?" text-attribute="Item tidak dapat dikembalikan!">
+                                <form action="/admin/students/{{$item->student->id}}" method="post" delete-attribute="true" title-attribute="Hapus {{$item->name}}?" text-attribute="Item tidak dapat dikembalikan!">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger">Hapus</button>

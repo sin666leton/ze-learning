@@ -37,7 +37,7 @@ Route::prefix('admin')->middleware('onlyTeacher')->group(function () {
     Route::resource('assignments', AssignmentController::class);
     Route::resource('quizzes', QuizController::class);
     Route::resource('students', StudentManagementController::class);
-    Route::resource('scores', ScoreController::class);
+    Route::resource('scores', ScoreController::class)->only(['edit', 'update']);
 
     Route::prefix('student-management')->controller(StudentManagementController::class)->group(function() {
         Route::post('/search', 'findStudent')->middleware('jsonOnly');

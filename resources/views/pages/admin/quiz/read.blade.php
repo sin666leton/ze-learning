@@ -158,7 +158,7 @@
                     <div class="flex-shrink-0">
                         <div class="flex items-center gap-2 p-3">
                             <div class="flex-shrink-0">
-                                <a href="/admin/answer_quiz/{{$quiz->id}}?student={{$item->studentClassroom->id}}" class="btn btn-primary">Lihat</a>
+                                <a href="/admin/answer_quiz/{{$item->id}}?student={{$item->studentClassroom->student_id}}" class="btn btn-primary">Lihat</a>
                             </div>
                             <div class="flex-shrink-0">
                                 <a href="/admin/scores/{{$item->id}}/edit?type=quiz" class="btn {{$item->published ? 'btn-success' : 'btn-danger'}}">Validasi</a>

@@ -8,6 +8,11 @@ class StudentClassroom extends Model
 {
     protected $table = 'student_classroom';
 
+    protected $fillable = [
+        'student_id',
+        'classroom_id'
+    ];
+
     public function student()
     {
         return $this->belongsTo(Student::class);

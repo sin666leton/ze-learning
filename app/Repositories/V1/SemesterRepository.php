@@ -44,7 +44,7 @@ class SemesterRepository implements \App\Contracts\Semester
     public function create(int $academicYearID, string $name): array
     {
         $semester = AcademicYear::select('id')
-            ->where('id', $$academicYearID)
+            ->where('id', $academicYearID)
             ->firstOr(function () {
                 throw new AcademicYearNotExists();
             })

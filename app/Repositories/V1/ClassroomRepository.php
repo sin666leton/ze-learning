@@ -9,6 +9,27 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ClassroomRepository implements \App\Contracts\Classroom
 {
+    public function singleFind(int $id): array
+    {
+        $classroom = Classroom::with([
+            'academicYear' => function ($academic) {
+                $academic->with([
+                    'semesters' => function ($semesters) {
+                        $semesters->select(['id', 'academic_year_id', 'name']);
+                    }
+                ])
+                ->select(['id', 'name']);
+            }
+        ])
+        ->select(['id', 'academic_year_id', 'name'])
+        ->where('id', $id)
+        ->firstOr(function () {
+            throw new ClassroomNotExists();
+        });
+
+        return $classroom->toArray();
+    }
+
     public function find(int $id, string $relation = 'subject', int|null $semesterID = null)
     {
         if ($semesterID == null);

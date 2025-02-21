@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\QuizNotExists;
+use App\Exceptions\ScoreNotExists;
 use App\Exceptions\StudentNotExists;
 use App\Models\Question;
 use App\Models\Quiz;
@@ -17,62 +18,64 @@ class AnswerQuizController extends Controller
         $studentID = $request->student;
         if ($studentID == null) return abort(404);
 
-        $pivot = StudentClassroom::with([
-            'student' => function ($query) {
-                $query->select(['id', 'user_id', 'nis'])
-                    ->with([
+        $score = Score::with([
+            'studentClassroom' => function ($pivot) use (&$studentID) {
+                $pivot->withWhereHas('student', function ($student) use (&$studentID) {
+                    $student->with([
                         'user' => function ($user) {
                             $user->select(['id', 'name']);
                         }
-                    ]);
-            }
-        ])
-        ->where('id', $studentID)
-        ->firstOr(function () {
-            throw new StudentNotExists();
-        });
-
-        $quiz = Quiz::with([
-            'questions' => function ($questions) use (&$pivot) {
-                $questions->select([
-                    'id',
-                    'quiz_id',
-                    'type',
-                    'content',
-                    'point'
+                    ])
+                    ->select(['id', 'user_id', 'nis'])
+                    ->where('id', $studentID);
+                })
+                ->select('id', 'student_id');
+            },
+            'scoreable' => function ($morph) use (&$studentID) {
+                $morph->with([
+                    'questions' => function ($questions) use (&$studentID) {
+                        $questions->select([
+                            'id',
+                            'quiz_id',
+                            'type',
+                            'content',
+                            'point'
+                        ])
+                        ->with([
+                            'answerQuestion' => function ($answer) use (&$studentID) {
+                                $answer->select(['question_id', 'id', 'student_id', 'content', 'is_correct'])
+                                    ->where('student_id', $studentID);
+                            },
+                            'choices' => function ($query) {
+                                $query->select(['id', 'question_id', 'content'])
+                                    ->whereHas('question', function ($q) {
+                                        $q->where('type', 'mcq');
+                                    });
+                            },
+                            'answerKey' => function ($query) {
+                                $query->select(['id', 'question_id', 'content'])
+                                    ->whereHas('question', function ($q) {
+                                        $q->where('type', 'mcq');
+                                    });
+                            }
+                        ]);
+                    }
                 ])
-                ->withWhereHas('answerQuestion', function ($answer) use (&$pivot) {
-                    $answer->select(['question_id', 'id', 'student_id', 'content', 'is_correct'])
-                        ->where('student_id', $pivot->student->id);
-                });
+                ->select('id');
             }
         ])
-        ->select(['id'])
+        ->select(['id', 'student_classroom_id', 'scoreable_id', 'scoreable_type', 'point', 'published', 'created_at'])
         ->where('id', $id)
         ->firstOr(function () {
-            throw new QuizNotExists();
+            throw new ScoreNotExists();
         });
 
-        $quiz->questions->where('type', 'mcq')->load([
-            'choices' => function ($query) {
-                $query->select(['id', 'question_id', 'content']);
-            },
-            'answerKey' => function ($query) {
-                $query->select(['id', 'question_id', 'content']);
-            }
-        ]);
+        if (!$score->studentClassroom) throw new StudentNotExists();
 
-        $score = Score::select(['id', 'scoreable_type', 'scoreable_id', 'student_classroom_id', 'point', 'published'])
-            ->where('student_classroom_id', $pivot->id)
-            ->where('scoreable_id', $id)
-            ->where('scoreable_type', 'App\Models\Quiz')
-            ->first();
-
-        $score->name = $pivot->student->user->name;
+        $score->created = $score->created_at->format('d-m-Y H:i');
 
         return view('pages.admin.answer_quiz.index', [
-            'score' => $score,
-            'quiz' => $quiz
+            'score' => $score->toArray(),
         ]);
     }
 }

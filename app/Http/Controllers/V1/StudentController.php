@@ -68,6 +68,9 @@ class StudentController extends Controller implements \App\Contracts\Controllers
 
 
         return view('pages.student.subject.index', [
+            'navLink' => [
+                ['url' => '#', 'label' => 'Mata pelajaran'],
+            ],
             'subjects' => $query->toArray()
         ]);
     }
@@ -156,7 +159,13 @@ class StudentController extends Controller implements \App\Contracts\Controllers
             return $subject;
         });
 
-        return view('pages.student.subject.read', $query->toArray());
+        return view('pages.student.subject.read', [
+            'navLink' => [
+                ['url' => '/students/subjects', 'label' => 'Mata pelajaran'],
+                ['url' => '#', 'label' => $query['name']],
+            ],
+            'subject' => $query->toArray()
+        ]);
     }
 
     public function assignmentRead(Request $request, string $id)
@@ -208,6 +217,12 @@ class StudentController extends Controller implements \App\Contracts\Controllers
             ->first();
 
         return view('pages.student.assignment.index', [
+            'navLink' => [
+                ['url' => '/students/subjects', 'label' => 'Mata pelajaran'],
+                ['url' => '/students/subjects/'.$subject['id'], 'label' => $subject['name']],
+                ['url' => '#', 'label' => $assignment['title']]
+            ],
+
             'assignment' => $assignment,
             'exists' => $answer == null ? false : $answer->toArray()
         ]);
@@ -265,6 +280,11 @@ class StudentController extends Controller implements \App\Contracts\Controllers
 
 
         return view('pages.student.quiz.index', [
+            'navLink' => [
+                ['url' => '/students/subjects', 'label' => 'Mata pelajaran'],
+                ['url' => '/students/subjects/'.$subject['id'], 'label' => $subject['name']],
+                ['url' => '#', 'label' => $quiz['title']]
+            ],
             'quiz' => $quiz
         ]);
     }
@@ -541,6 +561,7 @@ class StudentController extends Controller implements \App\Contracts\Controllers
                 'point'
             ])
             ->where('student_classroom_id', $request->classroom)
+            ->where('published', true)
             ->get()
             ->map(function ($morph) {
                 if ($morph->scoreable_type == 'App\Models\Quiz') {
@@ -562,6 +583,9 @@ class StudentController extends Controller implements \App\Contracts\Controllers
         // dd($scores);
 
         return view('pages.student.score.index', [
+            'navLink' => [
+                ['url' => '#', 'label' => 'Nilai'],
+            ],
             'student' => $pivot->toArray(),
             'scores' => $scores
         ]);

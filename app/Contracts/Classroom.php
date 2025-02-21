@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface Classroom
 {
+    public function singleFind(int $id): array;
+
     public function find(int $id, string $relation = 'subject', int|null $semesterID = null);
 
     /**

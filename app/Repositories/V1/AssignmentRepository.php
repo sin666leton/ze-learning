@@ -36,11 +36,33 @@ class AssignmentRepository implements \App\Contracts\Assignment
 
         $subject->assignments->map(function ($key) {
             $key->stat = $key->status;
+            $key->created = $key->created_at->format('d-m-Y H:i');
 
             return $key;
         });
 
         return $subject->toArray();
+    }
+
+    public function singleFind(int $id): array
+    {
+        $assignment = Assignment::with([
+            'subject' => function ($subject) {
+                $subject->with([
+                    'classroom' => function ($classroom) {
+                        $classroom->select(['id', 'name']);
+                    }
+                ])
+                ->select(['id', 'classroom_id', 'name']);
+            }
+        ])
+        ->select(['subject_id', 'id', 'title', 'content', 'size', 'access_at', 'ended_at'])
+        ->where('id', $id)
+        ->firstOr(function () {
+            throw new AssignmentNotExists();
+        });
+
+        return $assignment->toArray();
     }
 
     public function find(int $id): array
@@ -50,11 +72,32 @@ class AssignmentRepository implements \App\Contracts\Assignment
                 $subject->with([
                     'classroom' => function ($classroom) {
                         $classroom->select(['id', 'name'])
-                            ->withCount('students');
-                        }
-                    ])
-                    ->select(['id', 'classroom_id', 'name']);
+                        ->withCount('students');
+                    }
+                ])
+                ->select(['id', 'classroom_id', 'name']);
             },
+            'answerAssignments' => function ($answer) {
+                $answer->with([
+                    'score' => function ($scores) {
+                        $scores->select(['id', 'scoreable_id', 'scoreable_type', 'point', 'published']);
+                    },
+                    'studentClassroom' => function ($pivot) {
+                        $pivot->with([
+                            'student' => function ($student) {
+                                $student->select(['id', 'nis', 'user_id'])
+                                    ->with([
+                                        'user' => function ($user) {
+                                            $user->select(['id', 'name']);
+                                        }
+                                    ]);
+                            }
+                        ])
+                        ->select(['id', 'student_id']);
+                    }
+                ])
+                ->select(['id', 'student_classroom_id', 'assignment_id', 'link', 'namespace', 'created_at']);
+            }
         ])
         ->select(['id', 'subject_id', 'title', 'content', 'access_at', 'created_at', 'ended_at', 'size'])
         ->where('id', $id)
@@ -63,28 +106,10 @@ class AssignmentRepository implements \App\Contracts\Assignment
             throw new AssignmentNotExists();
         });
 
-        $assignment->load([
-            'answerAssignments' => function ($answer) {
-                $answer->with([
-                    'scores' => function ($scores) {
-                        $scores->select(['id', 'scoreable_id', 'scoreable_type', 'point', 'published']);
-                    }
-                ]);
-            }
-        ]);
-
-        $assignment->subject
-            ->classroom
-            ->load([
-                'students' => function ($students) {
-                    $students->with([
-                        'user' => function ($user) {
-                            $user->select(['id', 'name']);
-                        }
-                    ]);
-                }
-            ]);
-
+        $assignment->answerAssignments->map(function ($key) {
+            $key->created = $key->created_at->format('d-m-Y H:i');
+            return $key;
+        });
         $assignment->not_attempted = $assignment->subject->classroom->students_count - $assignment->answer_assignments_count;
         $assignment->created = $assignment->created_at->format('d-m-Y H:i');
 
@@ -100,7 +125,7 @@ class AssignmentRepository implements \App\Contracts\Assignment
             })
             ->assignments()
             ->create([
-                'title', $title,
+                'title' => $title,
                 'content' => $content,
                 'access_at' => $access_at,
                 'ended_at' => $ended_at,

@@ -65,18 +65,13 @@ class ClassroomController extends Controller
      */
     public function store(StoreClassroomRequest $request)
     {
-        $result = AcademicYear::select('id')
-            ->where('id', $request->safe()->academic_year_id)
-            ->firstOr(function () {
-                throw new AcademicYearNotExists();
-            })
-            ->classrooms()
-            ->create([
-                'name' => $request->safe()->name
-            ]);
+        $result = $this->classroom->create(
+            $request->safe()->academic_year_id,
+            $request->safe()->name
+        );
 
         return redirect()->route('classrooms.index', [
-            'academic_year' => $result->academic_year_id
+            'academic_year' => $result['academic_year_id']
         ]);
     }
 
@@ -120,7 +115,7 @@ class ClassroomController extends Controller
     public function edit(string $id)
     {
         return view('pages.admin.classroom.edit', [
-            'classroom' => $this->service->find($id)
+            'classroom' => $this->classroom->find($id)
         ]);
     }
 
@@ -129,7 +124,7 @@ class ClassroomController extends Controller
      */
     public function update(UpdateClassroomRequest $request, string $id)
     {
-        $this->service->update($id, $request->safe()->only('name'));
+        $this->classroom->update($id, $request->safe()->name);
 
         return redirect()->route('classrooms.index');
     }
@@ -139,7 +134,7 @@ class ClassroomController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->service->delete($id);
+        $this->classroom->delete($id);
 
         return redirect()->back();
     }

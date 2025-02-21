@@ -25,48 +25,38 @@ class AssignmentController extends Controller
         $subjectID = $request->subject;
         if ($subjectID == null) return abort(404);
 
-        $subject = Subject::with([
-            'assignments' => function ($query) {
-                $query->select([
-                    'id',
-                    'subject_id',
-                    'title',
-                    'content',
-                    'size',
-                    'created_at',
-                    'access_at',
-                    'ended_at'
-                ]);
-            }
-        ])
-        ->select()
-        ->where('id', $subjectID)
-        ->firstOr(function () {
-            throw new SubjectNotExists();
-        });
+        $subject = $this->assignment->getFromSubject($subjectID);
 
         return view('pages.admin.assignment.index', [
-            'subject' => $subject,
-            'total' => $subject->assignments->count()
+            'navLink' => [
+                ['url' => '/admin/classrooms', 'label' => 'Kelas'],
+                ['url' => '/admin/classrooms/'.$subject['classroom']['id'], 'label' => $subject['classroom']['name']],
+                ['url' => '/admin/subjects/'.$subject['id'], 'label' => $subject['name']],
+                ['url' => '#', 'label' => 'Penugasan'],
+            ],
+            'subject' => $subject
         ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Request $request)
+    public function create(Request $request, \App\Contracts\Subject $subject)
     {
         $subjectID = $request->subject;
         if ($request->subject == null) return abort(404);
 
-        $sub = Subject::select(['id', 'name'])
-            ->where('id', $subjectID)
-            ->firstOr(function () {
-                throw new SubjectNotExists();
-            });
+        $data = $subject->find($subjectID);
 
         return view('pages.admin.assignment.create', [
-            'subject' => $sub
+            'navLink' => [
+                ['url' => '/admin/classrooms', 'label' => 'Kelas'],
+                ['url' => '/admin/classrooms/'.$data['classroom']['id'], 'label' => $data['classroom']['name']],
+                ['url' => '/admin/subjects/'.$data['id'], 'label' => $data['name']],
+                ['url' => '/admin/assignments?subject='.$data['id'], 'label' => 'Penugasan'],
+                ['url' => '#', 'label' => 'Tambah'],
+            ],
+            'subject' => $data
         ]);
     }
 
@@ -77,19 +67,17 @@ class AssignmentController extends Controller
     {
         $access_at = isset($request->safe()->access_at) ? $request->safe()->access_at : now();
 
-        Subject::select('id')
-            ->findOrFail($request->safe()->subject_id)
-            ->assignments()
-            ->create([
-                'title' => $request->safe()->title,
-                'content' => $request->safe()->content,
-                'access_at' => $access_at,
-                'ended_at' => $request->safe()->ended_at,
-                'size' => $request->safe()->size
-            ]);
-
+        $subject = $this->assignment->create(
+            $request->safe()->subject_id,
+            $request->safe()->title,
+            $request->safe()->content,
+            $request->safe()->size,
+            $access_at,
+            $request->safe()->ended_at
+            
+        );
         return redirect()->route('assignments.index', [
-            'subject' => $request->safe()->subject_id
+            'subject' => $subject['subject_id']
         ]);
     }
 
@@ -101,6 +89,13 @@ class AssignmentController extends Controller
         $assignment = $this->assignment->find($id);
 
         return view('pages.admin.assignment.read', [
+            'navLink' => [
+                ['url' => '/admin/classrooms', 'label' => 'Kelas'],
+                ['url' => '/admin/classrooms/'.$assignment['subject']['classroom']['id'], 'label' => $assignment['subject']['classroom']['name']],
+                ['url' => '/admin/subjects/'.$assignment['subject']['id'], 'label' => $assignment['subject']['name']],
+                ['url' => '/admin/assignments?subject='.$assignment['subject']['id'], 'label' => 'Penugasan'],
+                ['url' => '#', 'label' => $assignment['title']],
+            ],
             'assignment' => $assignment,
             'bad' => 0,
             'good'=> 0,
@@ -114,13 +109,16 @@ class AssignmentController extends Controller
      */
     public function edit(string $id)
     {
-        $assignment = Assignment::select()
-            ->where('id', $id)
-            ->firstOr(function () {
-                throw new AssignmentNotExists();
-            });
+        $assignment = $this->assignment->singleFind($id);
 
         return view('pages.admin.assignment.edit', [
+            'navLink' => [
+                ['url' => '/admin/classrooms', 'label' => 'Kelas'],
+                ['url' => '/admin/classrooms/'.$assignment['subject']['classroom']['id'], 'label' => $assignment['subject']['classroom']['name']],
+                ['url' => '/admin/subjects/'.$assignment['subject']['id'], 'label' => $assignment['subject']['name']],
+                ['url' => '/admin/assignments?subject='.$assignment['id'], 'label' => 'Penugasan'],
+                ['url' => '#', 'label' => 'Edit'],
+            ],
             'assignment' => $assignment
         ]);
     }
@@ -130,29 +128,19 @@ class AssignmentController extends Controller
      */
     public function update(UpdateAssignmentRequest $request, string $id)
     {
-        $assignment = Assignment::with([
-            'subject' => function ($query) {
-                $query->select('id');
-            }
-        ])
-        ->select(['subject_id', 'id', 'title', 'content', 'access_at', 'ended_at', 'size'])
-        ->where('id', $id)
-        ->firstOr(function () {
-            throw new AssignmentNotExists();
-        });
-
         $access_at = isset($request->safe()->access_at) ? $request->safe()->access_at : now();
 
-        $assignment->update([
-            'title' => $request->safe()->title,
-            'content' => $request->safe()->content,
-            'access_at' => $access_at,
-            'ended_at' => $request->safe()->ended_at,
-            'size' => $request->safe()->size
-        ]);
+        $assignment = $this->assignment->update(
+            $id,
+            $request->safe()->title,
+            $request->safe()->content,
+            $request->safe()->size,
+            $access_at,
+            $request->safe()->ended_at,
+        );
 
         return redirect()->route('assignments.index', [
-            'subject' => $assignment->subject->id
+            'subject' => $assignment['subject_id']
         ]);
     }
 
@@ -161,9 +149,7 @@ class AssignmentController extends Controller
      */
     public function destroy(string $id)
     {
-        Assignment::select('id')
-            ->where('id', $id)
-            ->delete();
+        $bool = $this->assignment->delete($id);
 
         return redirect()->back();
     }
